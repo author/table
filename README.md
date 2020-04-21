@@ -312,6 +312,24 @@ const table = new Table(rows)
 console.log(table.rowCount, table.columnCount)
 ```
 
+## Miscellaneous Notes
+
+This class replaces tab characters with two spaces. This is an opinionated decision to prevent inconsistencies in display.
+
+If you disagree with this opinion the workaround is to extend the class:
+
+```javascript
+class MyTable extends Table {
+  constructor () {
+    super()
+
+    this.#tabWidth = 4
+  }
+}
+
+const table = new MyTable(rows)
+```
+
 ## Credits
 
 Created by [Corey Butler](https://github.com/coreybutler) for [Author.io](https://author.io).

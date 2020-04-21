@@ -1,20 +1,10 @@
-const stripColor = content => {
-  const pattern = [
-    '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
-    '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))',
-    '\\x1B[[(?);]{0,2}(;?\\d)*.',
-    '\\033(\\[(\\[H\\033\\[2J|\\d+;\\d+H|\\d+(;\\d+;\\d+(;\\d+;\\d+)?m|[mABCDFGd])|[HJK]|1K)|[78]|\\d*[PMX]|\\(B\\033\\[m)'
-  ].join('|');
-
-  return content.replace(new RegExp(pattern, 'g'), '')
-}
-
 export default class Table {
   #rows // Initialized in constructor
   #cols = new Map()
   #align = []
   #widths = []
   #tableWidth // Initialized in constructor
+  #tabWidth = 2
   #max = Infinity
   #cellspacing = 0
   #margin // Initialized in constructor, [left, right, top, bottom]
@@ -57,19 +47,27 @@ export default class Table {
     return [content.substring(0, width + 1)]
   }
 
-  constructor(rows = [], align = [], maxWidths = [], tableWidth = 80, margins = [0, 0, 0, 0]) {
-    const expandall = (maxWidths || []).length === 0
+  #cleanText = content => {
+    content = content.replace(/\t/g, this.#fill(this.#tabWidth))
+    const pattern = [
+      '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
+      '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))',
+      '\\x1B[[(?);]{0,2}(;?\\d)*.',
+      '\\033(\\[(\\[H\\033\\[2J|\\d+;\\d+H|\\d+(;\\d+;\\d+(;\\d+;\\d+)?m|[mABCDFGd])|[HJK]|1K)|[78]|\\d*[PMX]|\\(B\\033\\[m)'
+    ].join('|');
 
-    this.#rows = rows || []
-    this.#align = align || []
-    this.#widths = maxWidths || []
-    this.#margin = (margins || [0, 0, 0, 0]).map(m => m < 0 ? 0 : m)
+    return content.replace(new RegExp(pattern, 'g'), '')
+  }
 
-    for (let i = margins.length; i < 4; i++) {
-      this.#margin.push(0)
+  #expandall
+
+  #prepared = false
+  #prepare = () => {
+    if (this.#prepared) {
+      return
     }
 
-    this.#tableWidth = (tableWidth || 80) - (this.#margin[0] + this.#margin[1])
+    this.#prepared = true
 
     // Calculate the row/col matrix
     let columns = this.#rows.reduce((max, row) => row.length > max ? row.length : max, 0)
@@ -81,7 +79,7 @@ export default class Table {
     this.#originalColumns = emptyColumns // Archive the original columns (used internally with truncation)
     for (let row of this.#rows) {
       row.forEach((content, col) => {
-        content = stripColor(content)
+        content = this.#cleanText(content)
 
         if (emptyColumns.indexOf(col) >= 0 && content !== null && content !== undefined && typeof content === 'string' && content.trim().length > 0) {
           emptyColumns.splice(emptyColumns.indexOf(col), 1)
@@ -92,7 +90,7 @@ export default class Table {
         break
       }
     }
-    
+
     columns = columns - emptyColumns.length
 
     if (columns === 0) {
@@ -126,7 +124,7 @@ export default class Table {
         : new Array(this.#align.length - this.#widths.length).map((nil, i) => i)
     )
 
-    if (expandall || this.#widths.length === 0) {
+    if (this.#expandall || this.#widths.length === 0) {
       defaultWidth = Math.floor(this.#tableWidth / columns)
       extra = this.#tableWidth % columns
     } else {
@@ -174,19 +172,37 @@ export default class Table {
     })
   }
 
+  constructor(rows = [], align = [], maxWidths = [], tableWidth = 80, margins = [0, 0, 0, 0]) {
+    this.#expandall = (maxWidths || []).length === 0
+    this.#rows = rows || []
+    this.#align = align || []
+    this.#widths = maxWidths || []
+    this.#margin = (margins || [0, 0, 0, 0]).map(m => m < 0 ? 0 : m)
+
+    for (let i = margins.length; i < 4; i++) {
+      this.#margin.push(0)
+    }
+
+    this.#tableWidth = (tableWidth || 80) - (this.#margin[0] + this.#margin[1])
+  }
+
   get columns () {
+    !this.#prepared && this.#prepare()
     return this.#cols
   }
 
   get columnCount () {
+    !this.#prepared && this.#prepare()
     return this.#cols.size
   }
 
   get rows () {
+    !this.#prepared && this.#prepare()
     return this.#rows
   }
 
   get rowCount () {
+    !this.#prepared && this.#prepare()
     return this.#rows.length
   }
 
@@ -203,6 +219,10 @@ export default class Table {
   }
 
   get output() {
+    if (!this.#prepared) {
+      this.#prepare()
+    }
+
     if (this.#cellspacing > 0) {
       this.#cols.forEach((col, i) => {
         if (i < col.size - 1) {
