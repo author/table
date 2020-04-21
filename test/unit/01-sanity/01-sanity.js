@@ -1,12 +1,28 @@
 import 'source-map-support/register.js'
 import test from 'tape'
-import calc from '../../.node/index.js'
+import Table from '../../.node/index.js'
 
-test('Sanity Checks', t => {
-  t.pass('Template tests are available.')
-  t.ok(calc !== undefined, 'Library is instantiated.')
-  
-  t.ok(calc.add(1,4,4) === 9, `Adding numbers totals 9.`)
-  t.ok(calc.avg(1,4,4) === 3, `Averaging numbers totals 3.`)
+const rows = [
+  ['Column 1', 'Column 2', 'Column 3'],
+  ['test', '[-o, -opt]', 'This is an example, using a run-on sentence that should break onto a separate line or multiple lines depending on the table with specified.'],
+  ['cmd', '', 'Another command description.']
+]
+
+const basicOutput = `Column 1                  Column 2                  Column 3                    
+test                      [-o, -opt]                This is an example, using a 
+                                                    run-on sentence that should 
+                                                    break onto a separate line  
+                                                    or multiple lines depending 
+                                                    on the table with specified.
+cmd                                                 Another command description.`
+
+test('Sanity Testing', t => {
+  t.ok(typeof Table === 'function', 'Table is class available.')
+
+  const table = new Table(rows)
+  t.ok(table instanceof Table, 'Table instantiated correctly.')
+  // t.ok(ta, 'Table instantiated correctly.')
+
+  t.ok(table.output === basicOutput, 'Default output is formatted correctly.')
   t.end()
 })
