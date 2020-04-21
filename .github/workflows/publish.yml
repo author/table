@@ -77,7 +77,7 @@ jobs:
         if: success() && steps.autotagger.outputs.tagcreated == 'yes' && steps.release.outputs.id != ''
         uses: author/action-publish@stable
         with:
-          scan: .dist
+          scan: .dist, ./
         env:
           REGISTRY_TOKEN: "${{ secrets.NPM_TOKEN }}"
 
