@@ -1,6 +1,6 @@
 # @author.io/table ![Version](https://img.shields.io/github/v/tag/author/table?label=Latest&style=for-the-badge)
 
-![Build Status](https://travis-ci.org/author/table.svg?branch=master) using the  [cross-runtime template](https://github.com/author/template-cross-runtime).
+![Test and Build](https://github.com/author/table/workflows/Publish/badge.svg) using the  [cross-runtime template](https://github.com/author/template-cross-runtime).
 
 The table module generates nicely formatted/align text (UTF8) based tables. It was designed for use with [@author.io/shell](https://github.com/author/shell), but it is a generic library that can be used in any type of text application. It works across runtimes (Node.js, browsers), contains unit tests and source maps, and is available via popular CDN's. It has no dependencies and remaining lightweight is a key priority of this library (there are many other text table formatting libraries that do everything under the sun).
 
