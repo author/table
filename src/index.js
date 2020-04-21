@@ -1,3 +1,14 @@
+const stripColor = content => {
+  const pattern = [
+    '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
+    '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))',
+    '\\x1B[[(?);]{0,2}(;?\\d)*.',
+    '\\033(\\[(\\[H\\033\\[2J|\\d+;\\d+H|\\d+(;\\d+;\\d+(;\\d+;\\d+)?m|[mABCDFGd])|[HJK]|1K)|[78]|\\d*[PMX]|\\(B\\033\\[m)'
+  ].join('|');
+
+  return content.replace(new RegExp(pattern, 'g'), '')
+}
+
 export default class Table {
   #rows // Initialized in constructor
   #cols = new Map()
@@ -70,6 +81,8 @@ export default class Table {
     this.#originalColumns = emptyColumns // Archive the original columns (used internally with truncation)
     for (let row of this.#rows) {
       row.forEach((content, col) => {
+        content = stripColor(content)
+
         if (emptyColumns.indexOf(col) >= 0 && content !== null && content !== undefined && typeof content === 'string' && content.trim().length > 0) {
           emptyColumns.splice(emptyColumns.indexOf(col), 1)
         }
