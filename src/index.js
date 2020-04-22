@@ -13,6 +13,7 @@ export default class Table {
   #originalColumns = []
   #fillChar = ' '
   #fill = (count = 0, char = null) => new Array(count).fill(char || this.#fillChar).join('')
+  
   #pad = (content, width, position = 'right', char = null) => {
     char = char || this.#fillChar
 
@@ -35,6 +36,7 @@ export default class Table {
         return content + this.#fill(fill, char)
     }
   }
+  
   #truncateColumn = (content, width) => {
     if (width <= 0) {
       ['']
@@ -46,7 +48,7 @@ export default class Table {
 
     return [content.substring(0, width + 1)]
   }
-
+  
   #cleanText = content => {
     content = content.replace(/\t/g, this.#fill(this.#tabWidth))
     const pattern = [
@@ -246,13 +248,15 @@ export default class Table {
     })
 
     // Adjust wrapped columns
-    this.#cols.forEach((col, i) => {
-      this.#cols.forEach((otherCol, ii) => {
-        while (i !== ii && otherCol.lines.length < height) {
-          otherCol.lines.splice(otherCol.lines.length - 1, 0, this.#fill(otherCol.width))
-        }
+    if (this.#rows.length > 1) {
+      this.#cols.forEach((col, i) => {
+        this.#cols.forEach((otherCol, ii) => {
+          while (i !== ii && otherCol.lines.length < height) {
+            otherCol.lines.splice(otherCol.lines.length - 1, 0, this.#fill(otherCol.width))
+          }
+        })
       })
-    })
+    }
 
     // Generate the table
     let rows = []
