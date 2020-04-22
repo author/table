@@ -1,6 +1,6 @@
 {
   "name": "@author.io/table",
-  "version": "1.0.0-beta.3",
+  "version": "1.0.0-beta.4",
   "description": "Generate ASCII tables. Designed for CLI tools and text-based apps.",
   "main": "src/index.js",
   "directories": {
