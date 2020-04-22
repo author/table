@@ -237,11 +237,13 @@ export default class Table {
     let height = 0
     this.#cols.forEach((col, i) => {
       let lines = []
+      col.rows = []
       col.lines.forEach(line => { 
         const text = this.#truncate.indexOf(i) >= 0
           ? this.#truncateColumn(line, col.width)
           : this.wrap(line, col.width, col.align)
         lines = [...lines, ...text] 
+        col.rows.push(text.length)
       })
       col.lines = lines
       height = lines.length > height ? lines.length : height
@@ -250,9 +252,19 @@ export default class Table {
     // Adjust wrapped columns
     if (this.#rows.length > 1) {
       this.#cols.forEach((col, i) => {
-        this.#cols.forEach((otherCol, ii) => {
-          while (i !== ii && otherCol.lines.length < height) {
-            otherCol.lines.splice(otherCol.lines.length - 1, 0, this.#fill(otherCol.width))
+        this.#cols.forEach((otherCol, otherColumnNumber) => {
+          if (i !== otherColumnNumber) {
+            let accruedLines = 0
+            
+            col.rows.forEach(lines => {
+              if (lines > 1) {
+                for (let line = 1; line < lines; line++) {
+                  otherCol.lines.splice(accruedLines + 1, 0, this.#fill(otherCol.width))
+                }
+              }
+
+              accruedLines += lines
+            })
           }
         })
       })
@@ -321,7 +333,7 @@ export default class Table {
   }
 
   match (width) {
-    return new RegExp(`(.{0,${width}})[\\s\\n\\.\\,\\;\\:]`, 'g')
+    return new RegExp(`(.{0,${width}})[\\s\\n\\t(\\.\\s)]`, 'g')
   }
 
   // Truncate the specified columns
