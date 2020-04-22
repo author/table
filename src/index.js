@@ -293,7 +293,7 @@ export default class Table {
     }
 
     // Bottom margin
-    for (let i = 0; i < this.#margin[2]; i++) {
+    for (let i = 0; i < this.#margin[3]; i++) {
       rows.push('')
     }
 
