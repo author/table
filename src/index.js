@@ -109,7 +109,7 @@ export default class Table {
       if (this.#widths.length > 0) {
         this.#align = new Array(this.#widths.length).fill('l')
       } else {
-        this.#align = new Array(this.#rows[0].length).fill('l')
+        this.#align = new Array(this.#rows[0].length - emptyColumns.length).fill('l')
       }
     }
 
@@ -130,6 +130,7 @@ export default class Table {
       defaultWidth = Math.floor(this.#tableWidth / columns)
       extra = this.#tableWidth % columns
     } else {
+      this.#widths = this.#widths.filter((w, i, a) => emptyColumns.indexOf(i) < 0)
       this.#widths.forEach((w, i, a) => {
         if (typeof w === 'string' && w.substring(w.length - 1) === '%') {
           const pct = parseFloat(w.replace(/[^0-9]+/g, '')) / 100
