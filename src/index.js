@@ -313,6 +313,31 @@ export default class Table {
     return rows.join('\n')
   }
 
+  cut (content, width) {
+    let result = []
+    let sub = content.substring(0, width)
+    content = content.substring(width)
+
+    result.push(sub)
+    
+    if (content.length > width) {
+      const matches = content.match(this.match(width)) || []
+      const remainder = content.substring(matches.join('').length)
+
+      if (matches.length > 0) {
+        result = result.concat(matches)
+      }
+
+      if (remainder.length > width) {
+        result = result.concat(this.cut(remainder, width))
+      } else if (remainder > 0) {
+        result.push(remainder)
+      }
+    }
+
+    return result
+  }
+
   wrap (content, width, align = 'right') {
     align = align.toLowerCase()
 
@@ -323,10 +348,12 @@ export default class Table {
       return [this.#pad(content.trim(), width, align, this.#fillChar)]
     }
 
-    const result = content.match(this.match(width)) || []
-    const remainder = content.substring(result.join('').length)
+    let result = content.match(this.match(width)) || []
+    let remainder = content.substring(result.join('').length)
 
-    if (remainder.length > 0) {
+    if (remainder.length > width) {
+      result = result.concat(this.cut(remainder, width))
+    } else if (remainder.length > 0) {
       result.push(remainder)
     }
 
