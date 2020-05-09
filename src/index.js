@@ -21,19 +21,15 @@ export default class Table {
       return content
     }
 
-    let fill = width - content.length
-
     switch (position) {
       case 'center':
-        let extra = fill % 2
-        fill = Math.floor(fill / 2)
-        return this.#fill(fill, char) + content + this.#fill(fill + extra, char)
+        return content.padStart(Math.floor(content.length / 2), char).padEnd(width, char)
 
       case 'left':
-        return this.#fill(fill, char) + content
+        return content.padStart(width, char)
 
       default:
-        return content + this.#fill(fill, char)
+        return content.padEnd(width, char)
     }
   }
   
