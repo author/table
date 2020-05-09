@@ -1,3 +1,82 @@
+const cut = (content, width, re) => {
+  if (width < 1) {
+    throw new Error('Width must be at least 1.')
+  }
+  let result = [content.substring(0, width)]
+  content = content.substring(width)
+  
+  if (content.length > width) {
+    const matches = content.match(re) || []
+    let remainder = content.substring(matches.join('').length)
+
+    if (matches.length > 0) {
+      result = result.concat(matches)
+    }
+
+    if (remainder.length > 0 && remainder.length > width) {
+      if (maxMatch.test(remainder)) {
+        result = result.concat(cut(remainder, width))
+      } else {
+        let i = 0
+        console.log(remainder.length, width)
+        while (remainder.length > 0 && i < 20) {
+          i++
+          if (remainder.length <= width) {
+            result.push(remainder)
+            remainder = ''
+          } else {
+            result.push(remainder.substring(0, width))
+            remainder = remainder.substring(width)
+            console.log('>>>',remainder, result)
+          }
+          
+        }
+      }
+    } else if (remainder > 0) {
+      result.push(remainder)
+    }
+  }
+
+  return result
+}
+
+const pad = (content, width, position = 'right', char = ' ') => {
+  if (content.length >= width) {
+    return content
+  }
+
+  switch (position) {
+    case 'center':
+      return content.padStart(Math.floor(content.length / 2), char).padEnd(width, char)
+
+    case 'left':
+      return content.padStart(width, char)
+
+    default:
+      return content.padEnd(width, char)
+  }
+}
+
+const fill = (count = 0, char = ' ') => char.repeat(count)
+
+const truncateColumn = (content, width) => {
+  if (width <= 0) {
+    ['']
+  }
+
+  if (content.length <= width) {
+    return [content]
+  }
+
+  return [content.substring(0, width + 1)]
+}
+
+const match = width => {
+  return new RegExp(`(.{0,${width}})[\\s\\n\\t(\\.\\s)]`, 'g')
+}
+
+const maxMatch = match(2000)
+
 export default class Table {
   #rows // Initialized in constructor
   #cols = new Map()
@@ -11,42 +90,11 @@ export default class Table {
   #truncate = []
   #emptyCols = []
   #originalColumns = []
+  #RE = new Map()
   #fillChar = ' '
-  #fill = (count = 0, char = null) => (char || this.#fillChar).repeat(count)
-  
-  #pad = (content, width, position = 'right', char = null) => {
-    char = char || this.#fillChar
-
-    if (content.length >= width) {
-      return content
-    }
-
-    switch (position) {
-      case 'center':
-        return content.padStart(Math.floor(content.length / 2), char).padEnd(width, char)
-
-      case 'left':
-        return content.padStart(width, char)
-
-      default:
-        return content.padEnd(width, char)
-    }
-  }
-  
-  #truncateColumn = (content, width) => {
-    if (width <= 0) {
-      ['']
-    }
-
-    if (content.length <= width) {
-      return [content]
-    }
-
-    return [content.substring(0, width + 1)]
-  }
   
   #cleanText = content => {
-    content = content.replace(/\t/g, this.#fill(this.#tabWidth))
+    content = content.replace(/\t/g, fill(this.#tabWidth))
     const pattern = [
       '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
       '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))',
@@ -172,6 +220,14 @@ export default class Table {
   }
 
   constructor(rows = [], align = [], maxWidths = [], tableWidth = 80, margins = [0, 0, 0, 0]) {
+    const cfg = typeof rows === 'object' && !Array.isArray(rows) ? rows : {}
+
+    if (cfg.hasOwnProperty('rows')) { rows = cfg.rows }
+    if (cfg.hasOwnProperty('align')) { align = cfg.align }
+    if (cfg.hasOwnProperty('maxWidths')) { maxWidths = cfg.maxWidths }
+    if (cfg.hasOwnProperty('tableWidth')) { tableWidth = cfg.tableWidth }
+    if (cfg.hasOwnProperty('margins')) { margins = cfg.margins }
+    
     this.#expandall = (maxWidths || []).length === 0
     this.#rows = rows || []
     this.#align = align || []
@@ -235,10 +291,11 @@ export default class Table {
     this.#cols.forEach((col, i) => {
       let lines = []
       col.rows = []
-      col.lines.forEach(line => { 
+      col.lines.forEach(line => {
+        let w = col.width < 0 ? col.contentLength : col.width
         const text = this.#truncate.indexOf(i) >= 0
-          ? this.#truncateColumn(line, col.width)
-          : this.wrap(line, col.width, col.align)
+          ? truncateColumn(line, w)
+          : this.wrap(line, w, col.align)
         lines = [...lines, ...text] 
         col.rows.push(text.length)
       })
@@ -256,7 +313,7 @@ export default class Table {
             col.rows.forEach(lines => {
               if (lines > 1) {
                 for (let line = 1; line < lines; line++) {
-                  otherCol.lines.splice(accruedLines + 1, 0, this.#fill(otherCol.width))
+                  otherCol.lines.splice(accruedLines + 1, 0, fill(otherCol.width))
                 }
               }
 
@@ -269,12 +326,12 @@ export default class Table {
 
     // Generate the table
     let rows = []
-    const cellspacing = this.#fill(this.#cellspacing, ' ')
+    const cellspacing = fill(this.#cellspacing, ' ')
     let space = 0
     this.#cols.forEach((col, colNum) => {
       col.lines.forEach((line, num) => rows[num] = (rows[num] || '') + line + (colNum !== this.#cols.size - 1 ? cellspacing : ''))
       for (let i = col.lines.length; i < height; i++) {
-        rows[i] = this.#fill(space + col.width, ' ')
+        rows[i] = fill(space + col.width, ' ')
       }
       space += col.width
     })
@@ -284,10 +341,10 @@ export default class Table {
         this.#margin.forEach((margin, i) => {
           switch (i) {
             case 0: // left
-              row = `${this.#fill(margin)}${row}`
+              row = `${fill(margin)}${row}`
               break
             case 1: // right
-              row = `${row}${this.#fill(margin)}`
+              row = `${row}${fill(margin)}`
               break
           }
         })
@@ -309,55 +366,35 @@ export default class Table {
     return rows.join('\n')
   }
 
-  cut (content, width) {
-    let result = []
-    let sub = content.substring(0, width)
-    content = content.substring(width)
-
-    result.push(sub)
-    
-    if (content.length > width) {
-      const matches = content.match(this.match(width)) || []
-      const remainder = content.substring(matches.join('').length)
-
-      if (matches.length > 0) {
-        result = result.concat(matches)
-      }
-
-      if (remainder.length > width) {
-        result = result.concat(this.cut(remainder, width))
-      } else if (remainder > 0) {
-        result.push(remainder)
-      }
-    }
-
-    return result
-  }
-
   wrap (content, width, align = 'right') {
+    if (width < 1) {
+      throw new Error('Width must be at least 1.')
+    }
+  
     align = align.toLowerCase()
 
     // Reverse the alignment, since the padding uses "position" instead of "alignment"
     align = align === 'c' ? 'center' : (align === 'r' ? 'left' : 'right')
 
     if (content.length <= width) {
-      return [this.#pad(content.trim(), width, align, this.#fillChar)]
+      return [pad(content.trim(), width, align, this.#fillChar)]
     }
 
-    let result = content.match(this.match(width)) || []
+    let re = this.#RE.get(width)
+    if (!re) {
+      re = match(width)
+      this.#RE.set(width, re)
+    }
+    let result = content.match(re) || []
     let remainder = content.substring(result.join('').length)
 
     if (remainder.length > width) {
-      result = result.concat(this.cut(remainder, width))
+      result = result.concat(cut(remainder, width, re))
     } else if (remainder.length > 0) {
       result.push(remainder)
     }
 
-    return result.map(el => this.#pad(el.trim(), width, align, this.#fillChar))
-  }
-
-  match (width) {
-    return new RegExp(`(.{0,${width}})[\\s\\n\\t(\\.\\s)]`, 'g')
+    return result.map(el => pad(el.trim(), width, align, this.#fillChar))
   }
 
   // Truncate the specified columns
