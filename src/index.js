@@ -12,7 +12,7 @@ export default class Table {
   #emptyCols = []
   #originalColumns = []
   #fillChar = ' '
-  #fill = (count = 0, char = null) => new Array(count).fill(char || this.#fillChar).join('')
+  #fill = (count = 0, char = null) => (char || this.#fillChar).repeat(count)
   
   #pad = (content, width, position = 'right', char = null) => {
     char = char || this.#fillChar
