@@ -54,10 +54,5 @@
       "window",
       "global"
     ]
-  },
-  "dependencies": {
-    "chalk": "^4.1.2",
-    "colors": "^1.4.0",
-    "diff": "^5.0.0"
   }
 }
