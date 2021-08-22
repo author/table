@@ -18,7 +18,8 @@ const cut = (content, width, re) => {
         result = result.concat(cut(remainder, width))
       } else {
         let i = 0
-        console.log(remainder.length, width)
+        // console.log(remainder.length, width)
+
         while (remainder.length > 0 && i < 20) {
           i++
           if (remainder.length <= width) {
@@ -27,9 +28,7 @@ const cut = (content, width, re) => {
           } else {
             result.push(remainder.substring(0, width))
             remainder = remainder.substring(width)
-            console.log('>>>',remainder, result)
           }
-
         }
       }
     } else if (remainder > 0) {
@@ -61,7 +60,7 @@ const fill = (count = 0, char = ' ') => char.repeat(count)
 
 const truncateColumn = (content, width) => {
   if (width <= 0) {
-    ['']
+    return ['']
   }
 
   if (content.length <= width) {
@@ -100,7 +99,7 @@ export default class Table {
       '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))',
       '\\x1B[[(?);]{0,2}(;?\\d)*.',
       '\\033(\\[(\\[H\\033\\[2J|\\d+;\\d+H|\\d+(;\\d+;\\d+(;\\d+;\\d+)?m|[mABCDFGd])|[HJK]|1K)|[78]|\\d*[PMX]|\\(B\\033\\[m)'
-    ].join('|');
+    ].join('|')
 
     return content.replace(new RegExp(pattern, 'g'), '')
   }
@@ -123,7 +122,7 @@ export default class Table {
     // Remove empty columns
     const emptyColumns = new Array(columns).fill(0).map((c, i) => i)
     this.#originalColumns = emptyColumns // Archive the original columns (used internally with truncation)
-    for (let row of this.#rows) {
+    for (const row of this.#rows) {
       row.forEach((content, col) => {
         content = this.#cleanText(content)
 
@@ -164,11 +163,11 @@ export default class Table {
     // Calculate width limits
     let defaultWidth = -1
     let extra = 0
-    const expandableColumns = new Set(
-      this.#widths.length === 0
-        ? new Array(this.#align.length).map((nil, i) => i)
-        : new Array(this.#align.length - this.#widths.length).map((nil, i) => i)
-    )
+    // const expandableColumns = new Set(
+    //   this.#widths.length === 0
+    //     ? new Array(this.#align.length).map((nil, i) => i)
+    //     : new Array(this.#align.length - this.#widths.length).map((nil, i) => i)
+    // )
 
     if (this.#expandall || this.#widths.length === 0) {
       defaultWidth = Math.floor(this.#tableWidth / columns)
@@ -198,7 +197,7 @@ export default class Table {
     let start = 0
     this.#rows.forEach(row => {
       row.forEach((columnContent, i) => {
-        let data = this.#cols.get(i) || {
+        const data = this.#cols.get(i) || {
           align: this.#align[i] || 'l',
           width: this.#widths[i] || -1,
           start,
@@ -219,14 +218,14 @@ export default class Table {
     })
   }
 
-  constructor(rows = [], align = [], maxWidths = [], tableWidth = 80, margins = [0, 0, 0, 0]) {
+  constructor (rows = [], align = [], maxWidths = [], tableWidth = 80, margins = [0, 0, 0, 0]) {
     const cfg = typeof rows === 'object' && !Array.isArray(rows) ? rows : {}
 
-    if (cfg.hasOwnProperty('rows')) { rows = cfg.rows }
-    if (cfg.hasOwnProperty('align')) { align = cfg.align }
-    if (cfg.hasOwnProperty('maxWidths')) { maxWidths = cfg.maxWidths }
-    if (cfg.hasOwnProperty('tableWidth')) { tableWidth = cfg.tableWidth }
-    if (cfg.hasOwnProperty('margins')) { margins = cfg.margins }
+    if (cfg.hasOwnProperty('rows')) { rows = cfg.rows } // eslint-disable-line no-prototype-builtins
+    if (cfg.hasOwnProperty('align')) { align = cfg.align } // eslint-disable-line no-prototype-builtins
+    if (cfg.hasOwnProperty('maxWidths')) { maxWidths = cfg.maxWidths } // eslint-disable-line no-prototype-builtins
+    if (cfg.hasOwnProperty('tableWidth')) { tableWidth = cfg.tableWidth } // eslint-disable-line no-prototype-builtins
+    if (cfg.hasOwnProperty('margins')) { margins = cfg.margins } // eslint-disable-line no-prototype-builtins
 
     this.#expandall = (maxWidths || []).length === 0
     this.#rows = rows || []
@@ -273,7 +272,7 @@ export default class Table {
     this.#fillChar = value.substring(0, 1)
   }
 
-  get output() {
+  get output () {
     if (!this.#prepared) {
       this.#prepare()
     }
@@ -292,7 +291,7 @@ export default class Table {
       let lines = []
       col.rows = []
       col.lines.forEach(line => {
-        let w = col.width < 0 ? col.contentLength : col.width
+        const w = col.width < 0 ? col.contentLength : col.width
         const text = this.#truncate.indexOf(i) >= 0
           ? truncateColumn(line, w)
           : this.wrap(line, w, col.align)
@@ -329,7 +328,7 @@ export default class Table {
     const cellspacing = fill(this.#cellspacing, ' ')
     let space = 0
     this.#cols.forEach((col, colNum) => {
-      col.lines.forEach((line, num) => rows[num] = (rows[num] || '') + line + (colNum !== this.#cols.size - 1 ? cellspacing : ''))
+      col.lines.forEach((line, num) => { rows[num] = (rows[num] || '') + line + (colNum !== this.#cols.size - 1 ? cellspacing : '') })
       for (let i = col.lines.length; i < height; i++) {
         rows[i] = fill(space + col.width, ' ')
       }
