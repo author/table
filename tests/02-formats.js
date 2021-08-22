@@ -1,6 +1,5 @@
-import 'source-map-support/register.js'
-import test from 'tape'
-import Table from '../../.node/index.js'
+import test from 'tappedout'
+import Table from '@author.io/table'
 
 const rows = [
   ['Column 1', 'Column 2', 'Column 3'],
@@ -44,9 +43,10 @@ test('Use Cellspacing', t => {
   const table = new Table(rows, null, null, 4)
   table.cellspacing = 2
 
-  const out = `a   b 
+  const out = `a   b
 c   d `
-  t.ok(table.output === out, 'Generated truncated columns.')
+  // trimRight is required since most editors/IDEs strip trailing spaces from template literals above.
+  t.expect(table.output.split('\n').map(i => i.trimRight()).join('\n'), out.split('\n').map(i => i.trimRight()).join('\n'), 'Generated columns w/ cellspacing.')
   t.end()
 })
 

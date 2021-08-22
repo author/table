@@ -4,7 +4,7 @@ const cut = (content, width, re) => {
   }
   let result = [content.substring(0, width)]
   content = content.substring(width)
-  
+
   if (content.length > width) {
     const matches = content.match(re) || []
     let remainder = content.substring(matches.join('').length)
@@ -29,7 +29,7 @@ const cut = (content, width, re) => {
             remainder = remainder.substring(width)
             console.log('>>>',remainder, result)
           }
-          
+
         }
       }
     } else if (remainder > 0) {
@@ -92,7 +92,7 @@ export default class Table {
   #originalColumns = []
   #RE = new Map()
   #fillChar = ' '
-  
+
   #cleanText = content => {
     content = content.replace(/\t/g, fill(this.#tabWidth))
     const pattern = [
@@ -227,7 +227,7 @@ export default class Table {
     if (cfg.hasOwnProperty('maxWidths')) { maxWidths = cfg.maxWidths }
     if (cfg.hasOwnProperty('tableWidth')) { tableWidth = cfg.tableWidth }
     if (cfg.hasOwnProperty('margins')) { margins = cfg.margins }
-    
+
     this.#expandall = (maxWidths || []).length === 0
     this.#rows = rows || []
     this.#align = align || []
@@ -296,7 +296,7 @@ export default class Table {
         const text = this.#truncate.indexOf(i) >= 0
           ? truncateColumn(line, w)
           : this.wrap(line, w, col.align)
-        lines = [...lines, ...text] 
+        lines = [...lines, ...text]
         col.rows.push(text.length)
       })
       col.lines = lines
@@ -309,7 +309,7 @@ export default class Table {
         this.#cols.forEach((otherCol, otherColumnNumber) => {
           if (i !== otherColumnNumber) {
             let accruedLines = 0
-            
+
             col.rows.forEach(lines => {
               if (lines > 1) {
                 for (let line = 1; line < lines; line++) {
@@ -370,7 +370,7 @@ export default class Table {
     if (width < 1) {
       throw new Error('Width must be at least 1.')
     }
-  
+
     align = align.toLowerCase()
 
     // Reverse the alignment, since the padding uses "position" instead of "alignment"
@@ -386,7 +386,7 @@ export default class Table {
       this.#RE.set(width, re)
     }
     let result = content.match(re) || []
-    let remainder = content.substring(result.join('').length)
+    const remainder = content.substring(result.join('').length)
 
     if (remainder.length > width) {
       result = result.concat(cut(remainder, width, re))
@@ -406,7 +406,7 @@ export default class Table {
       this.#truncate = new Array(this.#rows.length).fill(0).map((a, i) => i)
     }
 
-    for (let arg of arguments) {
+    for (const arg of arguments) {
       if (arg <= 0) {
         this.#truncate = []
         return
