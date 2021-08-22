@@ -18,31 +18,78 @@ jobs:
 
       - uses: actions/setup-node@v1
         with:
-          node-version: '16'
+          node-version: '14'
 
-      # - name: Unit Test
-      #   id: unittest
-      #   run: |
-      #     npm run setup --if-present
-      #     npm test
+      - uses: actions/cache@v2
+        name: Establish Docker Cache
+        id: cache
+        with:
+          path: docker-cache
+          key: ${{ runner.os }}-docker-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
 
-        # If the version has changed, create a new git tag for it.
+      - name: Load cached Docker layers
+        run: |
+          if [ -d "docker-cache" ]; then
+            cat docker-cache/x* > my-image.tar
+            docker load < my-image.tar
+            rm -rf docker-cache
+          fi
+
+      - name: Setup Build Tooling
+        id: setup
+        run: |
+          base=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-base/tags?page_size=1'|jq '."results"[]["name"]')
+          base=$(sed -e 's/^"//' -e 's/"$//' <<<"$base")
+          echo Retrieving author/dev/dev-base:$base
+          docker pull author/dev-base:$base
+
+          deno=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-deno/tags?page_size=1'|jq '."results"[]["name"]')
+          deno=$(sed -e 's/^"//' -e 's/"$//' <<<"$deno")
+          echo Retrieving author/dev/dev-deno:$deno
+          docker pull author/dev-deno:$deno
+
+          browser=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-browser/tags?page_size=1'|jq '."results"[]["name"]')
+          browser=$(sed -e 's/^"//' -e 's/"$//' <<<"$browser")
+          echo Retrieving author/dev/dev-browser:$browser
+          docker pull author/dev-browser:$browser
+
+          node=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-node/tags?page_size=1'|jq '."results"[]["name"]')
+          node=$(sed -e 's/^"//' -e 's/"$//' <<<"$node")
+          echo Retrieving author/dev/dev-node:$node
+          docker pull author/dev-node:$node
+
+          # node -e "const p=new Set(Object.keys(require('./package.json').peerDependencies));p.delete('@author.io/dev');console.log('npm i ' + Array.from(p).join(' '))"
+          version=$(npm show @author.io/dev version)
+          echo $version
+          npm i -g @author.io/dev@$version
+          dev -v
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Test
+        if: success()
+        run: |
+          npm test
+
       - name: Tag
         id: autotagger
+        if: success()
         uses: butlerlogic/action-autotag@stable
         with:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-        # The remaining steps all depend on whether or  not
-        # a new tag was created. There is no need to release/publish
-        # updates until the code base is in a releaseable state.
+        # If the new version/tag is a pre-release (i.e. 1.0.0-beta.1), create
+        # an environment variable indicating it is a prerelease.
+      - name: Pre-release
+        if: steps.autotagger.outputs.tagname != ''
+        run: |
+          if [[ "${{ steps.autotagger.output.version }}" == *"-"* ]]; then echo "::set-env IS_PRERELEASE=true";else echo "::set-env IS_PRERELEASE=''";fi
 
-        # Create a github release
-        # This will create a snapshot of the module,
-        # available in the "Releases" section on Github.
-      - name: Create Release
-        id: release
-        if: steps.autotagger.outputs.tagcreated == 'yes'
+      - name: Release
+        id: create_release
+        if: steps.autotagger.outputs.tagname != ''
         uses: actions/create-release@v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -51,37 +98,38 @@ jobs:
           release_name: ${{ steps.autotagger.outputs.tagname }}
           body: ${{ steps.autotagger.outputs.tagmessage }}
           draft: false
-          prerelease: ${{ steps.autotagger.outputs.prerelease == 'yes' }}
+          prerelease: env.IS_PRERELEASE != ''
 
+        # Build tarballs of the module code.
       - name: Build Release Artifacts
-        if: success() && steps.release.outputs.id != ''
-        id: build
+        id: build_release
+        if: steps.create_release.outputs.id != ''
         run: |
-          npm run build --if-present
+          dev build --pack
+          cp -rf .dist ./dist
 
-      # - name: Upload Release Artifacts
-      #   if: success() && steps.release.outputs.id != ''
-      #   uses: AButler/upload-release-assets@v2.0
-      #   with:
-      #     files: './.dist/**/*.tar.gz'
-      #     repo-token: ${{ secrets.GITHUB_TOKEN }}
-      #     release-tag: ${{ steps.autotagger.outputs.tagname }}
+        # Upload tarballs to the release.
+      - name: Upload Release Artifacts
+        uses: AButler/upload-release-assets@v2.0
+        if: steps.create_release.outputs.id != ''
+        with:
+          files: '.dist/*.tar.gz'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: ${{ steps.autotagger.outputs.tagname }}
 
-        # Use this action to publish a single module to npm.
-      - name: Publish
-        id: publish
-        if: success() && steps.autotagger.outputs.tagcreated == 'yes' && steps.release.outputs.id != ''
+      - name: Publish to npm
+        id: publish_npm
+        if: steps.autotagger.outputs.tagname != ''
         uses: author/action-publish@stable
         with:
-          scan: .dist
+          scan: ./dist
         env:
-          REGISTRY_TOKEN: "${{ secrets.NPM_TOKEN }}"
+          REGISTRY_TOKEN: ${{ secrets.NPM_REGISTRY_TOKEN }}
 
-        # If the publish fails, rollback the release
-      - name: Rollback
-        if: failure() && steps.autotagger.outputs.tagcreated == 'yes'
+      - name: Rollback Release
+        if: failure() && steps.create_release.outputs.id != ''
         uses: author/action-rollback@stable
         with:
-          release_id: ${{ steps.release.outputs.id }}
+          tag: ${{ steps.autotagger.outputs.tagname }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
