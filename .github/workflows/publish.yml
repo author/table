@@ -120,7 +120,7 @@ jobs:
       - name: Publish to npm
         id: publish_npm
         if: steps.autotagger.outputs.tagname != ''
-        uses: butlerlogic/action-publish@stable
+        uses: author/action-publish@stable
         with:
           scan: ./dist
         env:
