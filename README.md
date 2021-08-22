@@ -21,11 +21,11 @@ console.log(table.output)
 **The default output:**
 
 ```sh
-Column 1                  Column 2                  Column 3                    
-test                      [-o, -opt]                This is an example, using a 
-                                                    run-on sentence that should 
-                                                    break onto a separate line  
-                                                    or multiple lines depending 
+Column 1                  Column 2                  Column 3
+test                      [-o, -opt]                This is an example, using a
+                                                    run-on sentence that should
+                                                    break onto a separate line
+                                                    or multiple lines depending
                                                     on the table with specified.
 cmd                                                 Another command description.
 ```
@@ -34,35 +34,23 @@ cmd                                                 Another command description.
 
 ### For Modern Node (ES Modules)
 
-`npm install @author.io/node-table`
+`npm install @author.io/table`
 
 Please note, you'll need a verison of Node that supports ES Modules. In Node 12, this feature is behind the `--experimental-modules` flag. It is available in Node 13+ without a flag, but your `package.json` file must have the `"type": "module"` attribute. This feature will be generally available in Node 14.0.0 (release date April 21, 2020).
-
-### For Legacy Node (CommonJS/require)
-
-If you need to use the older CommonJS format (i.e. `require`), run `npm install @author.io/node-table-legacy` instead.
 
 ### For Browsers
 
 **CDN**
 
 ```javascript
-import Table from 'https://cdn.pika.dev/@author.io/browser-table'
+import Table from 'https://cdn.jsdelivr.net/npm/@author.io/table/index.min.js'
 ```
 
-Also available from [jsdelivr](https://www.jsdelivr.com/?query=%40author.io%2Ftable) and [unpkg](https://unpkg.com/@author.io/browser-table).
-
-**npm options**
-
-If you wish to bundle this library in your build process, use the version most appropriate for your target runtimes:
-
-- `npm install @author.io/table` (source)
-- `npm install @author.io/browser-table` (Minified ES Module)
-- `npm install @author.io/browser-table-es6` (IIFE Minified Module - globally accessible)
+Also available from [unpkg](https://unpkg.com/@author.io/browser-table).
 
 ### Debugging
 
-Each distribution has a corresponding `-debug` version that should be installed _alongside_ the main module (the debugging is an add-on module). For example, `npm install @author.io/node-table-debug --save-dev` would install the debugging code for Node.
+Each distribution has a corresponding `-debug` version that should be installed _alongside_ the main module (the debugging is an add-on module). For example, `npm install @author.io/table-debug --save-dev` would install the debugging code.
 
 ---
 
@@ -79,16 +67,16 @@ Each of these are modifiable using methods and/or configuration parameters (deta
 
 **All _empty columns are stripped_. Here's why:**
 
-There is no need for an empty column. 
+There is no need for an empty column.
 
 **_But... I want an empty column!_**
 Blank columns usually have a header. This is different from an empty column, which has NO content. For example:
 
 ```sh
-Column 1                  Column 2                  Column 3                    
-test                                                This is an example... 
-test2                                               This is an example... 
-test3                                               This is an example... 
+Column 1                  Column 2                  Column 3
+test                                                This is an example...
+test2                                               This is an example...
+test3                                               This is an example...
 ```
 
 `Column 2` is _blank_. If there were no header, it would be considered "empty".
@@ -334,7 +322,7 @@ const table = new MyTable(rows)
 
 Created by [Corey Butler](https://github.com/coreybutler) for [Author.io](https://author.io).
 
-**Sponsors (as of 2020)**
+**Sponsors (as of 2021)**
 
 <table cellpadding="10" cellspacing="0" border="0">
   <tr>
